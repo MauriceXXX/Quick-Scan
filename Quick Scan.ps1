@@ -168,18 +168,14 @@ function Get-Tasks {
 }
 
 function Get-EfiScan {
-    param (
-        [char]$DriveLetter = 'X'
-    )
-    $drive = "$DriveLetter:"
-    mountvol $drive /S
-    if (-not (Test-Path "$drive\EFI")) {
-        Write-Error "EFI partition not found at $drive. Aborting."
+    mountvol X: /S
+    if (-not (Test-Path "X:\EFI")) {
+        Write-Error "EFI partition not found at X:. Aborting."
         return
     }
 
     Write-Host "[+] Scanning EFI .efi files" -ForegroundColor Green
-    Get-ChildItem -Path "$drive\EFI" -Recurse -Filter *.efi -ErrorAction SilentlyContinue | ForEach-Object {
+    Get-ChildItem -Path "X:\EFI" -Recurse -Filter *.efi -ErrorAction SilentlyContinue | ForEach-Object {
         $file = $_.FullName
         $hash = (Get-FileHash -Algorithm SHA256 -Path $file).Hash
         $sig = Get-AuthenticodeSignature -FilePath $file
@@ -193,7 +189,7 @@ function Get-EfiScan {
         Write-Host ""
     }
 
-    mountvol $drive /D
+    mountvol X: /D
 }
 
 # ===============================
@@ -207,6 +203,6 @@ Get-SusSystemFiles
 Get-PrefetchBypass
 Get-ProcessInfo
 Get-Tasks
-Get-EfiScan -DriveLetter 'X'
+Get-EfiScan
 
 Write-Host "`n===== SYSTEM SCAN FINISHED =====" -ForegroundColor Green
