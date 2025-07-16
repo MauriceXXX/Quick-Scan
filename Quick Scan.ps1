@@ -30,7 +30,7 @@ function Get-SusSystemFiles {
     foreach ($directory in $directories) {
         if (Test-Path $directory) {
             $files = Get-ChildItem -Path $directory -Recurse -ErrorAction SilentlyContinue -Force | 
-            Where-Object { $_.Extension -in ".exe", ".dll" }
+            Where-Object { $_.Extension -in ".exe", ".dll", ".efi" }
 
             foreach ($file in $files) {
                 $flags = @()
