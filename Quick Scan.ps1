@@ -170,11 +170,11 @@ function Get-Tasks {
 function Get-EfiScan {
     mountvol X: /S
     if (-not (Test-Path "X:\EFI")) {
-        Write-Error "EFI partition not found at X:. Aborting."
+        Write-Error "`nEFI partition not found at X:. Aborting."
         return
     }
 
-    Write-Host "[+] Scanning EFI .efi files" -ForegroundColor Green
+    Write-Host "`n[+] Scanning EFI .efi files" -ForegroundColor Green
     Get-ChildItem -Path "X:\EFI" -Recurse -Filter *.efi -ErrorAction SilentlyContinue | ForEach-Object {
         $file = $_.FullName
         $hash = (Get-FileHash -Algorithm SHA256 -Path $file).Hash
