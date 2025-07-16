@@ -175,7 +175,7 @@ function Get-EfiScan {
     }
 
     Write-Host "`n[+] Scanning EFI .efi files" -ForegroundColor Green
-    Get-ChildItem -Path "X:\EFI" -Recurse -Filter *.efi -ErrorAction SilentlyContinue | ForEach-Object {
+    Get-ChildItem -Path "X:\EFI" -Recurse -Filter *.efi -ErrorAction SilentlyContinue -Recurse -Force | ForEach-Object {
         $file = $_.FullName
         $hash = (Get-FileHash -Algorithm SHA256 -Path $file).Hash
         $sig = Get-AuthenticodeSignature -FilePath $file
