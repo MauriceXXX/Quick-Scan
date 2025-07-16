@@ -179,12 +179,21 @@ function Get-EfiScan {
         $file = $_.FullName
         $hash = (Get-FileHash -Algorithm SHA256 -Path $file).Hash
         $sig = Get-AuthenticodeSignature -FilePath $file
-
-        Write-Host "EFI: $file" -ForegroundColor Cyan
-        Write-Host "  Hash     : $hash"
-        Write-Host "  SigStatus: $($sig.Status)"
-        if ($sig.SignerCertificate) {
-            Write-Host "  Signer   : $($sig.SignerCertificate.Subject)"
+        if ($($sig.Status) -eq "Valid") {
+            Write-Host "EFI: $file" -ForegroundColor Cyan
+            Write-Host "  Hash     : $hash"
+            Write-Host "  SigStatus: $($sig.Status)"
+            if ($sig.SignerCertificate) {
+                Write-Host "  Signer   : $($sig.SignerCertificate.Subject)"
+            }
+        }
+        else {
+            Write-Host "EFI: $file" -ForegroundColor Red
+            Write-Host "  Hash     : $hash"
+            Write-Host "  SigStatus: $($sig.Status)"
+            if ($sig.SignerCertificate) {
+                Write-Host "  Signer   : $($sig.SignerCertificate.Subject)"
+            }
         }
         Write-Host ""
     }
