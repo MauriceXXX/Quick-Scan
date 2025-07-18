@@ -129,8 +129,13 @@ function Get-Tasks {
             $arguments = [System.Environment]::ExpandEnvironmentVariables($action.Arguments)
             $commandLine = "$rawCommand $arguments".Trim()
 
-            $filePath = if ($commandLine -match '^\s*"?([^"\s]+?\.[^\s"\\/:]+)"?') { $matches[1] } else { $rawCommand }
+            $filePath = if ($commandLine -match '([A-Z]:\\(?:[^\\:*?"<>|\r\n]+\\)*[^\\:*?"<>|\r\n]+\.[A-Za-z0-9]+)$') {
+                $matches[1]
+            } else {
+                $rawCommand
+            }
             $filePath = $filePath.Trim('"').Trim("'")
+
 
             if (Test-Path $filePath) {
                 if (Test-Path $filePath -PathType Leaf) {
@@ -170,32 +175,24 @@ function Get-Tasks {
 function Get-EfiScan {
     mountvol X: /S
     if (-not (Test-Path "X:\EFI")) {
-        Write-Error "`nEFI partition not found at X:. Aborting."
+        Write-Error "`nEFI partition not found"
         return
     }
 
-    Write-Host "`n[+] Scanning EFI .efi files" -ForegroundColor Green
-    Get-ChildItem -Path "X:\EFI" -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Extension -match '\.efi$|\.dll$' } | ForEach-Object {
+    Write-Host "`n[+] Scanning EFI files" -ForegroundColor Green
+    Get-ChildItem -Path "X:\EFI" -Recurse -Force -ErrorAction SilentlyContinue | Where-Object { $_.Extension -match '\.efi$|\.dll$|\.mui$' } | ForEach-Object {
         $file = $_.FullName
         $hash = (Get-FileHash -Algorithm SHA256 -Path $file).Hash
         $sig = Get-AuthenticodeSignature -FilePath $file
-        if ($($sig.Status) -eq "Valid") {
-            Write-Host "EFI: $file" -ForegroundColor Cyan
-            Write-Host "  Hash     : $hash"
-            Write-Host "  SigStatus: $($sig.Status)"
-            if ($sig.SignerCertificate) {
-                Write-Host "  Signer   : $($sig.SignerCertificate.Subject)"
-            }
-        }
-        else {
+        if ($($sig.Status) -ne "Valid") {
             Write-Host "EFI: $file" -ForegroundColor Red
             Write-Host "  Hash     : $hash"
             Write-Host "  SigStatus: $($sig.Status)"
             if ($sig.SignerCertificate) {
                 Write-Host "  Signer   : $($sig.SignerCertificate.Subject)"
             }
+            Write-Host ""
         }
-        Write-Host ""
     }
 
     mountvol X: /D
@@ -203,9 +200,9 @@ function Get-EfiScan {
 
 function Get-UnsignedSystemFiles {
     param (
-        [string[]]$Extensions = @("*.exe", "*.dll", "*.efi"),
+        [string[]]$Extensions = @("*.exe", "*.dll", "*.efi", "*.sys"),
         [string[]]$Paths = @("$env:windir\System32", "$env:windir\SysWOW64"),
-        [int]$MinSizeKB = 5,
+        [int]$MinSizeKB = 50,
         [int]$MaxSizeMB = 50
     )
 
